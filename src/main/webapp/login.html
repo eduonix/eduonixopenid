@@ -1,0 +1,42 @@
+
+
+
+<!DOCTYPE html>
+<html><head>
+<title>Eduonix OpenID Connect </title>
+<meta charset="UTF-8">
+<meta name="description" content="" />
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+
+
+</head><body>
+            <div id="headerDiv" > </div>
+
+              <div id="loginDiv" style="background-color:blue;margin:20px; padding:10px;top:120px;left:120px;position:fixed;font-size:large;" >
+
+                  <form id="target" action="oauth2-authorize-user.jsp" method="post">
+                      <input type="hidden" name="grantType" value="code">
+                      <input type="hidden" name="consumerKey" value="uZ9Rh5dfdhS8RAfRho_QpCuaJoQa">
+                      <input type="hidden" name="scope" value="openid">
+                      <input type="hidden" name="callbackurl" value="http://localhost:8000/edusecure/oauth2client">
+                      <input type="hidden" name="authorizeEndpoint" value="https://localhost:9443/oauth2/authorize">
+                      <input type="submit" name="authorize" value="Login">
+                  </form>
+                </div>
+
+
+
+            <script type="text/javascript">
+
+                $( document ).ready(function() {
+                    console.log( "ready!" );
+
+                    $( "#headerDiv" ).css({ "background-color":"black", "margin":"20px", "padding":"10px 0 0 200px", "top":"-10px", "left":"-10px",
+                        "position":"fixed", "font-size":"large" , "width":"100%" , "height":"5%", "color":"white"  }).text("Eduonix Secure Applications Open ID Connect");
+                });
+
+            </script>
+
+
+</body>
+</html>

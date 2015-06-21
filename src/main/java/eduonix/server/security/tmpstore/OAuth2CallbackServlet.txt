@@ -1,0 +1,587 @@
+package eduonix.server.security;
+
+import org.apache.amber.oauth2.client.OAuthClient;
+
+import org.apache.amber.oauth2.client.URLConnectionClient;
+
+import org.apache.amber.oauth2.client.request.OAuthClientRequest;
+
+import org.apache.amber.oauth2.client.response.OAuthAuthzResponse;
+
+import org.apache.amber.oauth2.client.response.OAuthClientResponse;
+
+import org.apache.amber.oauth2.common.exception.OAuthProblemException;
+
+import org.apache.amber.oauth2.common.exception.OAuthSystemException;
+
+import org.apache.amber.oauth2.common.message.types.GrantType;
+
+import org.apache.log4j.Logger;
+
+import org.jasypt.util.text.StrongTextEncryptor;
+
+import org.json.simple.JSONObject;
+
+import org.json.simple.parser.JSONParser;
+
+import org.socraticgrid.server.util.KeyStore;
+
+import org.socraticgrid.shared.security.Role;
+
+import org.socraticgrid.shared.security.UserBean;
+
+import org.socraticgrid.server.util.PortalProperties;
+
+import org.socraticgrid.shared.util.PortalConstant;
+
+import org.wso2.carbon.identity.oauth2.stub.dto.OAuth2TokenValidationRequestDTO;
+
+import
+
+        org.wso2.carbon.identity.oauth2.stub.dto.OAuth2TokenValidationRequestDTO_OAuth2AccessToken;
+
+import org.wso2.carbon.identity.oauth2.stub.dto.OAuth2TokenValidationResponseDTO;
+
+import javax.servlet.ServletException;
+
+import javax.servlet.http.HttpServlet;
+
+import javax.servlet.http.HttpServletRequest;
+
+import javax.servlet.http.HttpServletResponse;
+
+import javax.servlet.http.HttpSession;
+
+import java.io.BufferedReader;
+
+import java.io.IOException;
+
+import java.io.InputStreamReader;
+
+import java.net.URL;
+
+import java.net.URLConnection;
+
+import java.util.Enumeration;
+
+import java.util.HashSet;
+
+import java.util.Iterator;
+
+import java.util.Set;
+
+/**
+
+ * Licensed to the Apache Software Foundation (ASF) under one
+
+ * or more contributor license agreements. See the NOTICE file
+
+ * distributed with this work for additional information
+
+ * regarding copyright ownership. The ASF licenses this file
+
+ * to you under the Apache License, Version 2.0 (the
+
+ * "License"); you may not use this file except in compliance
+
+ * with the License. You may obtain a copy of the License at
+
+ * <p/>
+
+ * http://www.apache.org/licenses/LICENSE­2.0
+
+ * <p/>
+
+ * Unless required by applicable law or agreed to in writing,
+
+ * software distributed under the License is distributed on an
+
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+
+ * KIND, either express or implied. See the License for the
+
+ * specific language governing permissions and limitations
+
+ * under the License.
+
+ */
+
+/**
+
+ * A callback servlet for the Wso2 OAuth authorisation flow. When the user firs access
+
+ * the application they are redirected to the Wso2 login. After a successful login the
+
+ * request is redirected to the servlet.
+
+ */
+
+public class OAuth2CallbackServlet extends HttpServlet {
+
+    private static Logger log = Logger.getLogger(OAuth2CallbackServlet.class);
+
+    private KeyStore keyStore = new KeyStore();
+
+    /**
+
+     *
+
+     * @param request standard java HttpServlet HttpServletRequest instance
+
+     * @param resp standard java HttpServlet HttpServletResponse instance
+
+     * @throws ServletException
+
+     * @throws IOException
+
+     */
+
+    @Override
+
+    protected void doGet(HttpServletRequest request, HttpServletResponse resp) throws ServletException,
+
+            IOException {
+
+        log.info("OAuth2CallbackServlet do get");
+
+        HttpSession session = request.getSession();
+
+        OAuthAuthzResponse authzResponse = null;
+
+/**
+
+ * A OAuth credential for this application not user.
+
+ */
+
+        String consumerKey = PortalProperties.getProperty(PortalProperties.PROPS.CONSUMER_KEY);
+
+/**
+
+ * A OAuth property for this application.
+
+ */
+
+        String tokenEndpoint = PortalProperties.getProperty(PortalProperties.PROPS.TOKEN_ENDPOINT);
+
+/**
+
+ * A OAuth credential for this application not user.
+
+ */
+
+        String consumerSecret =
+
+                PortalProperties.getProperty(PortalProperties.PROPS.CONSUMER_SECRET);
+
+/**
+
+ * A OAuth property for this application.
+
+ */
+
+        String callbackurl = PortalProperties.getProperty(PortalProperties.PROPS.CALLBACK_URL);
+
+/**
+
+ * A OAuth access for this application.
+
+ */
+
+        String accessToken = null;
+
+/**
+
+ * A OAuth token property for this application.
+
+ */
+
+        String idToken = null;
+
+/**
+
+ * A OAuth Authorization Code property for this application.
+
+ */
+
+        String code = null;
+
+/**
+
+ * obtain the response parameters
+
+ */
+
+        Enumeration parameterNames = request.getParameterNames();
+
+        while (parameterNames.hasMoreElements()) {
+
+            String name = (String) parameterNames.nextElement();
+
+            log.info("parameterName: " + name);
+
+        }
+
+/**
+
+ * Step through the OAuth2 flow schema, a series of requests. If the Authorization Code
+
+ * exists in the session then we should have an access token, if not request an Authorization Code
+
+ * and perform the OAUth flow to obtain an access token if the user has valid credential for the Wso2
+
+ * server login. The key to understanding this flow is that the user logs in in, then the call back
+
+ * server can request an access token.
+
+ */
+
+        try {
+
+// authorization code
+
+            code = (String) session.getAttribute(OAuth2Constant.CODE.getValue());
+
+            if (code == null) {
+
+                authzResponse = OAuthAuthzResponse.oauthCodeAuthzResponse(request);
+
+// line 234 oauth2.jsp to oauth2­get­access­token.jsp
+
+                code = authzResponse.getCode();
+
+                log.info("state=" + authzResponse.getState());
+
+                log.info("expires=" + authzResponse.getExpiresIn());
+
+                log.info("accesstoken=" + authzResponse.getAccessToken());
+
+                log.info("id_token=" +
+
+                        authzResponse.getRequest().getParameter(PortalConstant.SessionVariable.ID_TOKEN.name()));
+
+                session.setAttribute(OAuth2Constant.CODE.getValue(), code);
+
+            } else {
+
+                accessToken = (String) session.getAttribute(OAuth2Constant.ACCESS_TOKEN.getValue());
+
+            }
+
+        } catch (Exception e) {
+
+        }
+
+// this code executes if we are using encrypted OAuth credentials
+
+        try {
+
+            if
+
+                    (Boolean.parseBoolean(PortalProperties.getProperty(PortalProperties.PROPS.IS_KEYS_ENCRYPTED))) {
+
+// this is a Base 64 encrypted string
+
+                consumerKey = PortalProperties.getProperty(PortalProperties.PROPS.CONSUMER_KEY);
+
+                consumerSecret =
+
+                        PortalProperties.getProperty(PortalProperties.PROPS.CONSUMER_SECRET);
+
+                StrongTextEncryptor textEncryptor = new StrongTextEncryptor();
+
+// textEncryptor.setPassword(PortalProperties.getProperty(PortalProperties.PROPS.KEY));
+
+                textEncryptor.setPassword(keyStore.KEY);
+
+                consumerKey = textEncryptor.decrypt(consumerKey);
+
+                consumerSecret = textEncryptor.decrypt(consumerSecret);
+
+            }
+
+            log.info("OAuth2CallbackServlet debug String consumerSecret " + consumerSecret);
+
+            log.info("OAuth2CallbackServlet debug String consumerKey " + consumerKey);
+
+            log.info("OAuth2CallbackServlet debug String callbackurl " + callbackurl);
+
+/**
+
+ * Used by the The Wso2 server api client for authorisation requests.
+
+ */
+
+            OAuthClientRequest accessRequest = OAuthClientRequest.tokenLocation(tokenEndpoint)
+
+                    .setGrantType(GrantType.AUTHORIZATION_CODE)
+
+                    .setClientId(consumerKey)
+
+                    .setClientSecret(consumerSecret)
+
+                    .setRedirectURI(callbackurl)
+
+                    .setCode(code)
+
+                    .buildBodyMessage();
+
+//create OAuth client that uses custom http client under the hood
+
+            OAuthClient oAuthClient = new OAuthClient(new URLConnectionClient());
+
+// make the call for the access token
+
+            OAuthClientResponse oAuthResponse = oAuthClient.accessToken(accessRequest);
+
+            accessToken = oAuthResponse.getParam(OAuth2Constant.ACCESS_TOKEN.getValue());
+
+            idToken = oAuthResponse.getParam(PortalConstant.SessionVariable.ID_TOKEN.name());
+
+            if (idToken != null) {
+
+                log.debug("Found id token");
+
+                session.setAttribute(PortalConstant.SessionVariable.ID_TOKEN.name(), idToken);
+
+            }
+
+            OAuth2TokenValidationRequestDTO oauthReq = new OAuth2TokenValidationRequestDTO();
+
+            OAuth2TokenValidationRequestDTO_OAuth2AccessToken accessTokenWrapper = new
+
+                    OAuth2TokenValidationRequestDTO_OAuth2AccessToken();
+
+            accessTokenWrapper.setIdentifier(accessToken);
+
+            accessTokenWrapper.setTokenType("bearer");
+
+            oauthReq.setAccessToken(accessTokenWrapper);
+
+            OAuth2TokenValidationResponseDTO respIsDto = null;
+
+            try {
+
+/**
+
+ as a json.
+
+ servlet
+
+ JSONObject jsonResult =
+
+ executeGet(PortalProperties.getProperty(PortalProperties.PROPS.USERINFO_ENDPOINT), "",
+
+ accessToken);
+
+ if (jsonResult != null) {
+
+ * With a valid access token we can request a user profile from the Wso2 server api. This return
+
+ * We store this data as a Json Object in the session. This can be retrieved later by the session
+
+ */
+
+                UserBean userBean = new UserBean();
+
+                if (jsonResult.get("sub") != null) {
+
+                    userBean.setId(jsonResult.get("sub").toString());
+
+                }
+
+                String roles = jsonResult.get("http://wso2.org/claims/role").toString();
+
+                log.info("OAuth2CallbackServlet json roles " + roles);
+
+// roles value is like 'nurse,Internal/everyone'
+
+                String[] rolesArray = roles.split(",");
+
+                HashSet<Role> roleSet = new HashSet<Role>();
+
+                if (rolesArray != null && rolesArray.length != 0) {
+
+                    String[] validRoles = Role.getValidRoles(rolesArray);
+
+                    for (String validRole : validRoles) {
+
+                        roleSet.add(Role.valueOf(validRole));
+
+                    }
+
+                }
+
+                userBean.setRoleSet(roleSet);
+
+                session.setAttribute(PortalConstant.SessionVariable.USER_BEAN.name(), userBean);
+
+                session.setAttribute(PortalConstant.SessionVariable.USER_INFO_JSON.name(), jsonResult);
+
+                if (log.isDebugEnabled()) {
+
+                    Set set = jsonResult.keySet();
+
+                    Iterator i = set.iterator();
+
+                    while (i.hasNext()) {
+
+                        String key = (String) i.next();
+
+                        log.debug("key=" + key);
+
+                        log.debug("value=" + jsonResult.get(key));
+
+                    }
+
+                }
+
+            }
+
+// get the id token
+
+            String id_token =
+
+                    authzResponse.getRequest().getParameter(PortalConstant.SessionVariable.ID_TOKEN.name());
+
+            if (id_token != null) {
+
+            }
+
+// Used to Validate the OAuth access token.
+
+            OAuth2ServiceClient client = new OAuth2ServiceClient();
+
+            respIsDto = client.validateAuthenticationRequest(oauthReq);
+
+// validate the access token
+
+            if (!respIsDto.getValid()) {
+
+                session.setAttribute(PortalConstant.SessionVariable.ID_TOKEN.name(), id_token);
+
+                log.info("id_token=" + id_token);
+
+                log.debug(respIsDto.getErrorMsg());
+
+                resp.sendError(401);
+
+                return;
+
+            }
+
+            if (respIsDto != null && respIsDto.getAuthorizedUser() != null) {
+
+                respIsDto.getAuthorizedUser());
+
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+        }
+
+// store everything we have obtained from the Wso2 server in the session
+
+        session.setAttribute(PortalConstant.SessionVariable.AUTH_CODE.name(), code);
+
+        session.setAttribute(PortalConstant.SessionVariable.ACCESS_TOKEN.name(), accessToken);
+
+        session.setAttribute(PortalConstant.SessionVariable.ID_TOKEN.name(), idToken);
+
+        log.info("OAuth2CallbackServlet doGet returns Authorization Code: " + code);
+
+        log.info("OAuth2CallbackServlet doGet returns AccessToken: " + accessToken);
+
+        log.info("OAuth2CallbackServlet doGet returns idToken: " + idToken);
+
+        log.info("OAuth2CallbackServlet doGet returns AuthorizedUser: " +
+
+    } catch (OAuthSystemException e) {
+
+        e.printStackTrace();
+
+    } catch (OAuthProblemException e) {
+
+        e.printStackTrace();
+
+    }
+
+    log.info("OAuth2CallbackServlet doGet redirecting to " +
+
+            PortalProperties.getProperty(PortalProperties.PROPS.GWTBASECONTEXT_URL));
+
+    resp.sendRedirect(PortalProperties.getProperty(PortalProperties.PROPS.GWTBASECONTEXT_URL));
+
+}
+
+    @Override
+
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+
+            throws ServletException, IOException {
+
+        log.info("OAuth2CallbackServlet do post");
+
+    }
+
+    public static JSONObject executeGet(String targetURL, String urlParameters, String
+
+            accessTokenIdentifier) {
+
+        try {
+
+            URL myURL = new URL(targetURL);
+
+            URLConnection myURLConnection = myURL.openConnection();
+
+            myURLConnection.setRequestProperty("Content­Type", "application/x­www­form­urlencoded");
+
+            myURLConnection.setRequestProperty("Authorization", "Bearer " + accessTokenIdentifier);
+
+            myURLConnection.setRequestProperty("Content­Language", "en­US");
+
+            myURLConnection.setUseCaches(false);
+
+            myURLConnection.setDoInput(true);
+
+            myURLConnection.setDoOutput(true);
+
+            BufferedReader br = new BufferedReader(
+
+                    String line;
+
+            StringBuffer response = new StringBuffer();
+
+            while ((line = br.readLine()) != null) {
+
+                response.append(line);
+
+                response.append('\r');
+
+            }
+
+            br.close();
+
+            JSONParser parser = new JSONParser();
+
+            JSONObject obj = (JSONObject) parser.parse(response.toString());
+
+            return obj;
+
+        } catch (Exception e) {
+
+// new URL() failed
+
+// ...
+
+        }
+
+        return null;
+
+    }
+
+}
+
+new InputStreamReader(myURLConnection.getInputStream()));
