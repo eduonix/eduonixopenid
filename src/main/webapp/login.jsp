@@ -1,4 +1,12 @@
+<%@ page import="eduonix.server.security.SecureUtils" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 
+<%!
+
+    String key=SecureUtils.CONSUMER_KEY_VALUE;
+    String callbackurl =SecureUtils.OAUTH_CALLBACK_VALUE;
+    String authorizeEndpoint=SecureUtils.OAUTH2_AUTHZ_ENDPOINT_VALUE;
+%>
 
 
 <!DOCTYPE html>
@@ -16,10 +24,10 @@
 
                   <form id="target" action="oauth2-auth-call.jsp" method="post">
                       <input type="hidden" name="grantType" value="code">
-                      <input type="hidden" name="consumerKey" value="uZ9Rh5dfdhS8RAfRho_QpCuaJoQa">
+                      <input type="hidden" name="consumerKey" value="<%=key%>">
                       <input type="hidden" name="scope" value="openid">
-                      <input type="hidden" name="callbackurl" value="http://localhost:8000/edusecure/oauth2client">
-                      <input type="hidden" name="authorizeEndpoint" value="https://localhost:9443/oauth2/authorize">
+                      <input type="hidden" name="callbackurl" value="<%=callbackurl%>">
+                      <input type="hidden" name="authorizeEndpoint" value="<%=authorizeEndpoint%>">
                       <input type="submit" name="authorize" value="Login">
                   </form>
                 </div>
