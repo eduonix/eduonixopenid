@@ -1,6 +1,6 @@
 # Eduonix OPENID CONNECT
 
-### Eduontix tutorial code for OPENID CONNECT
+### Eduonix tutorial code for OPENID CONNECT
 
 ## Build
 
