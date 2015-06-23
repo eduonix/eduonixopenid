@@ -1,4 +1,4 @@
-# Eduontix OPENID CONNECT
+# Eduonix OPENID CONNECT
 
 ### Eduontix tutorial code for OPENID CONNECT
 
