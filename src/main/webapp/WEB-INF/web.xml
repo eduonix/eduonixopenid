@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
+<web-app xmlns="http://java.sun.com/xml/ns/javaee" version="2.5">
+
+    <display-name>HelloWorld Application</display-name>
+    <description>
+        This is a simple web application with a source code organization
+        based on the recommendations of the Application Developer's Guide.
+    </description>
+
+
+    <servlet>
+        <servlet-name>OAuth2CallbackServlet</servlet-name>
+        <servlet-class>eduonix.server.security.OAuth2CallbackServlet</servlet-class>
+        <init-param>
+            <description>serverUrl</description>
+            <param-name>serverUrl</param-name>
+            <param-value>https://localhost:9443/services/</param-value>
+        </init-param>
+        <init-param>
+            <description>userName</description>
+            <param-name>userName</param-name>
+            <param-value>admin</param-value>
+        </init-param>
+        <init-param>
+            <description>password</description>
+            <param-name>password</param-name>
+            <param-value>admin</param-value>
+        </init-param>
+        <load-on-startup>0</load-on-startup>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>OAuth2CallbackServlet</servlet-name>
+        <url-pattern>/oauth2client</url-pattern>
+    </servlet-mapping>
+
+
+    <welcome-file-list>
+        <welcome-file>login.html</welcome-file>
+    </welcome-file-list>
+
+</web-app>
