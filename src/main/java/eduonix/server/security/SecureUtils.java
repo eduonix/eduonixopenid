@@ -42,11 +42,11 @@ public class SecureUtils {
 
      public static final String USER_INFO_ENDPOINT = "https://localhost:9443/oauth2/userinfo?schema=openid";
 
-    public static final String OAUTH2_AUTHZ_ENDPOINT = "authorizeEndpoint";
+    public static final String OAUTH2_AUTHZ_ENDPOINT_VALUE = "https://localhost:9443/oauth2/authorize";
+
+    public static final String OAUTH2_AUTHZ_ENDPOINT =  "authorizeEndpoint";
 
     public static final String OAUTH2_ACCESS_ENDPOINT = "accessEndpoint";
-
-    public static final String OAUTH2_AUTHZ_ENDPOINT_VALUE = "https://localhost:9443/oauth2/authorize";
 
     public static final String REQ_TOK_ENDPOINT = "https://localhost:9443/oauth2/token";
 

@@ -1,5 +1,6 @@
 <%@ page import="org.apache.amber.oauth2.client.request.OAuthClientRequest" %>
 <%@ page import="eduonix.server.security.SecureUtils" %>
+<%@ page import="java.net.URLDecoder" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 
 <%
@@ -17,7 +18,6 @@
         session.setAttribute(SecureUtils.CONSUMER_KEY, consumerKey);
         session.setAttribute(SecureUtils.CONSUMER_SECRET, consumerSecret);
 
-        if (authzGrantType.equals(SecureUtils.OAUTH2_GRANT_TYPE_CODE) || authzGrantType.equals(SecureUtils.OAUTH2_GRANT_TYPE_IMPLICIT)) {
 
             OAuthClientRequest authzRequest = OAuthClientRequest
                     .authorizationLocation(authzEndpoint)
@@ -27,11 +27,10 @@
                     .setScope(scope)
                     .buildQueryMessage();
             String authoriseURI =authzRequest.getLocationUri();
-            System.out.println("authorise 1" +authoriseURI);
-            response.sendRedirect(authoriseURI);
-            return;
 
-        }
+            response.sendRedirect(authoriseURI);
+
+
 
 
     } catch (Exception e) {

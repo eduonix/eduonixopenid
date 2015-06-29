@@ -13,6 +13,7 @@
 <%@ page import="org.json.simple.JSONObject" %>
 <%@ page import="java.util.Iterator" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="java.net.URLDecoder" %>
 
 
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
@@ -33,12 +34,14 @@
                 .setCode(code)
                 .buildBodyMessage();
 
+        System.out.println("authorise 3 " + URLDecoder.decode(accessRequest.getBody(), "UTF-8"));
 
         //create OAuth client that uses custom http client under the hood
         OAuthClient oAuthClient = new OAuthClient(new URLConnectionClient());
         OAuthClientResponse oAuthResponse = oAuthClient.accessToken(accessRequest);
 
         String accessToken = oAuthResponse.getParam(SecureUtils.ACCESS_TOKEN);
+
 
         if (accessToken != null) {
             System.out.println("get-access-token  " + accessToken);
@@ -53,7 +56,7 @@
         }
 
 
-        String result = executeGet(SecureUtils.USER_INFO_ENDPOINT, "", accessToken);
+        String result = executeGet(SecureUtils.USER_INFO_ENDPOINT,  accessToken);
 
         if(result != null) {
             String json = new String(result);
@@ -95,7 +98,7 @@
 
 <%!
 
-    public static String executeGet(String targetURL, String urlParameters, String accessTokenIdentifier){
+    public static String executeGet(String targetURL, String accessTokenIdentifier){
         try {
             URL myURL = new URL(targetURL);
             URLConnection myURLConnection = myURL.openConnection();
@@ -106,6 +109,8 @@
             myURLConnection.setDoInput(true);
             myURLConnection.setDoOutput(true);
 
+            System.out.println(myURLConnection.getURL().toExternalForm());
+
             BufferedReader br = new BufferedReader(
                     new InputStreamReader(myURLConnection.getInputStream()));
             String line;
@@ -115,7 +120,11 @@
                 response.append('\r');
             }
             br.close();
+            System.out.println(response.toString());
             return response.toString();
+
+
+
         }
         catch (Exception e) {   }
         return "";

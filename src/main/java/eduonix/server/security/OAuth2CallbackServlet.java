@@ -8,12 +8,27 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
+import java.net.URLDecoder;
 
 /**
  * Created by user on 6/19/15.
  */
 public class OAuth2CallbackServlet  extends HttpServlet {
 
+
+    /**
+     *
+     *
+     * With out this code willget ssl handshake exception shown below
+     *
+     *
+     * javax.net.ssl.SSLHandshakeException: sun.security.validator.ValidatorException:
+     * PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException:
+     * unable to find valid certification path to requested target
+     *
+     * @param config
+     * @throws ServletException
+     */
 
     @Override
     public void init(ServletConfig config) throws ServletException {
@@ -62,9 +77,10 @@ public class OAuth2CallbackServlet  extends HttpServlet {
     }
 
 
-
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse resp) throws ServletException, IOException {
+
+        System.out.println("authorise 2 " + URLDecoder.decode(request.getRequestURI(), "UTF-8")   );
 
         String code = (String) request.getParameter(SecureUtils.CODE);
         String key =  SecureUtils.CONSUMER_KEY_VALUE;
